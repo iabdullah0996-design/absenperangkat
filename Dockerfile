@@ -27,13 +27,14 @@ COPY . /var/www
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 RUN composer install --no-dev --optimize-autoloader
 
-# Build aset CSS/JS frontend & Filament
+# Build aset CSS/JS frontend & publish aset Filament
 RUN npm install && npm run build
+RUN php artisan filament:assets || true
 
 # Buat file database.sqlite & symlink storage
 RUN touch database/database.sqlite
 RUN php artisan storage:link || true
-RUN chmod -R 777 storage bootstrap/cache database
+RUN chmod -R 777 storage bootstrap/cache database public
 
 EXPOSE 8000
 
