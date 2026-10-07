@@ -1,6 +1,5 @@
 FROM php:8.4-fpm
 
-# Install Nginx dan dependensi yang dibutuhkan
 RUN apt-get update && apt-get install -y \
     nginx \
     libpng-dev \
@@ -15,29 +14,22 @@ RUN apt-get update && apt-get install -y \
     nodejs \
     npm
 
-# Install ekstensi PHP
 RUN docker-php-ext-install pdo_mysql pdo_sqlite mbstring exif pcntl bcmath gd
 
-# Set working directory
 WORKDIR /var/www
 
-# Copy kodingan proyek
 COPY . /var/www
 
-# Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 RUN composer install --no-dev --optimize-autoloader
 
-# Build aset CSS/JS & Filament
 RUN npm install && npm run build
 RUN php artisan filament:assets || true
 
-# Buat file database.sqlite & symlink storage
 RUN touch database/database.sqlite
 RUN php artisan storage:link || true
 RUN chmod -R 777 storage bootstrap/cache database public
 
-# Konfigurasi Nginx ringkas
 RUN echo 'server { \
     listen 8000; \
     index index.php index.html; \
@@ -55,5 +47,4 @@ RUN echo 'server { \
 
 EXPOSE 8000
 
-# Jalankan PHP-FPM dan Nginx secara bersamaan
 CMD ["sh", "-c", "php artisan migrate --force && php artisan optimize:clear && php-fpm -D && nginx -g 'daemon off;'"]
