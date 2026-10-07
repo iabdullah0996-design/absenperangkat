@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install -y \
     nodejs \
     npm
 
-# Install ekstensi PHP (termasuk pdo_sqlite untuk database SQLite)
+# Install ekstensi PHP
 RUN docker-php-ext-install pdo_mysql pdo_sqlite mbstring exif pcntl bcmath gd
 
 # Set working directory
@@ -27,11 +27,15 @@ COPY . /var/www
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 RUN composer install --no-dev --optimize-autoloader
 
-# Buat file database.sqlite jika belum ada & beri izin akses folder
+# Build aset CSS/JS frontend & Filament
+RUN npm install && npm run build
+
+# Buat file database.sqlite & symlink storage
 RUN touch database/database.sqlite
+RUN php artisan storage:link || true
 RUN chmod -R 777 storage bootstrap/cache database
 
 EXPOSE 8000
 
-# Jalankan auto-migrate database lalu jalankan server
-CMD ["sh", "-c", "php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=8000"]
+# Jalankan auto-migrate database & optimize lalu start server
+CMD ["sh", "-c", "php artisan migrate --force && php artisan optimize:clear && php artisan serve --host=0.0.0.0 --port=8000"]
