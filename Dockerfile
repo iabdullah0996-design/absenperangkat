@@ -1,7 +1,8 @@
 FROM php:8.4-fpm
 
-# Install dependensi sistem, Node.js, npm, SQLite, & ekstensi PHP
+# Install Nginx dan dependensi yang dibutuhkan
 RUN apt-get update && apt-get install -y \
+    nginx \
     libpng-dev \
     libonig-dev \
     libxml2-dev \
@@ -27,7 +28,7 @@ COPY . /var/www
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 RUN composer install --no-dev --optimize-autoloader
 
-# Build aset CSS/JS frontend & publish aset Filament
+# Build aset CSS/JS & Filament
 RUN npm install && npm run build
 RUN php artisan filament:assets || true
 
@@ -36,7 +37,23 @@ RUN touch database/database.sqlite
 RUN php artisan storage:link || true
 RUN chmod -R 777 storage bootstrap/cache database public
 
+# Konfigurasi Nginx ringkas
+RUN echo 'server { \
+    listen 8000; \
+    index index.php index.html; \
+    root /var/www/public; \
+    location / { \
+        try_files $uri $uri/ /index.php?$query_string; \
+    } \
+    location ~ \.php$ { \
+        fastcgi_pass 127.0.0.1:9000; \
+        fastcgi_index index.php; \
+        include fastcgi_params; \
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name; \
+    } \
+}' > /etc/nginx/sites-available/default
+
 EXPOSE 8000
 
-# Jalankan auto-migrate database & optimize lalu start server
-CMD ["sh", "-c", "php artisan migrate --force && php artisan optimize:clear && php artisan serve --host=0.0.0.0 --port=8000"]
+# Jalankan PHP-FPM dan Nginx secara bersamaan
+CMD ["sh", "-c", "php artisan migrate --force && php artisan optimize:clear && php-fpm -D && nginx -g 'daemon off;'"]
