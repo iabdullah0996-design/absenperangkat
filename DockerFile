@@ -1,6 +1,6 @@
 FROM php:8.4-fpm
 
-# Install dependensi sistem & ekstensi PHP yang dibutuhkan Laravel
+# Install dependensi sistem, Node.js, npm, & ekstensi PHP
 RUN apt-get update && apt-get install -y \
     libpng-dev \
     libonig-dev \
@@ -8,7 +8,9 @@ RUN apt-get update && apt-get install -y \
     zip \
     unzip \
     git \
-    curl
+    curl \
+    nodejs \
+    npm
 
 RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
 
