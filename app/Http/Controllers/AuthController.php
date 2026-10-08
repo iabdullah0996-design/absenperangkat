@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Perangkat;
+use App\Models\perangkat;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
