@@ -5,29 +5,10 @@ use App\Models\Perangkat;
 
 return [
 
-    /*
-    |--------------------------------------------------------------------------
-    | Authentication Defaults
-    |--------------------------------------------------------------------------
-    |
-    | Dynamic default guard diset ke 'perangkat' agar saat user biasa belum login,
-    | Laravel menggunakan guard 'perangkat' sebagai fallback acuan dasar.
-    |
-    */
-
     'defaults' => [
         'guard' => env('AUTH_GUARD', 'perangkat'),
         'passwords' => env('AUTH_PASSWORD_BROKER', 'users'),
     ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Authentication Guards
-    |--------------------------------------------------------------------------
-    |
-    | Terdiri dari 3 guard: 'web', 'perangkat' (user biasa/NIK), dan 'user' (admin).
-    |
-    */
 
     'guards' => [
         'web' => [
@@ -46,15 +27,6 @@ return [
         ],
     ],
 
-    /*
-    |--------------------------------------------------------------------------
-    | User Providers
-    |--------------------------------------------------------------------------
-    |
-    | Menghubungkan Guard ke Model/Tabel Database masing-masing.
-    |
-    */
-
     'providers' => [
         'users' => [
             'driver' => 'eloquent',
@@ -67,12 +39,6 @@ return [
         ],
     ],
 
-    /*
-    |--------------------------------------------------------------------------
-    | Resetting Passwords
-    |--------------------------------------------------------------------------
-    */
-
     'passwords' => [
         'users' => [
             'provider' => 'users',
@@ -81,12 +47,6 @@ return [
             'throttle' => 60,
         ],
     ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Password Confirmation Timeout
-    |--------------------------------------------------------------------------
-    */
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 

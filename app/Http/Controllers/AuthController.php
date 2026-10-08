@@ -14,6 +14,12 @@ class AuthController extends Controller
      */
     public function proseslogin(Request $request)
     {
+        // Validasi input form login
+        $request->validate([
+            'nik' => 'required',
+            'password' => 'required',
+        ]);
+
         if (Auth::guard('perangkat')->attempt(['nik' => $request->nik, 'password' => $request->password])) {
             $request->session()->regenerate();
             return redirect('/dashboard');
@@ -41,6 +47,11 @@ class AuthController extends Controller
      */
     public function prosesloginadmin(Request $request)
     {
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required',
+        ]);
+
         if (Auth::guard('user')->attempt(['email' => $request->email, 'password' => $request->password])) {
             $request->session()->regenerate();
             return redirect()->route('dashboardadmin');
