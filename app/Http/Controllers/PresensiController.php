@@ -50,6 +50,9 @@ class PresensiController extends Controller
             }
 
             $lokasi_user = explode(",", $lokasi);
+            if (count($lokasi_user) < 2) {
+                return response("empty_location", 200);
+            }
             $lat_user = (float) $lokasi_user[0];
             $long_user = (float) $lokasi_user[1];
 
@@ -99,7 +102,7 @@ class PresensiController extends Controller
                 $data_pulang = [
                     'jam_out' => $jam,
                     'foto_out' => $fileName,
-                    'lokasi_out' => $lokasi
+                    'lokasi' => $lokasi
                 ];
 
                 DB::table('presensi')
@@ -118,7 +121,7 @@ class PresensiController extends Controller
                     'tgl_presensi' => $tgl_presensi,
                     'jam_in' => $jam,
                     'foto_in' => $fileName,
-                    'lokasi_in' => $lokasi
+                    'lokasi' => $lokasi
                 ];
 
                 try {
@@ -222,9 +225,10 @@ class PresensiController extends Controller
             "Juli", "Agustus", "September", "Oktober", "November", "Desember"
         ];
 
+        // Diperbaiki menggunakan whereMonth & whereYear (aman dari SQL Injection)
         $histori = DB::table('presensi')
-            ->whereRaw('MONTH(tgl_presensi)="' . $bulan . '"')
-            ->whereRaw('YEAR(tgl_presensi)="' . $tahun . '"')
+            ->whereMonth('tgl_presensi', $bulan)
+            ->whereYear('tgl_presensi', $tahun)
             ->where('nik', $nik)
             ->orderBy('tgl_presensi')
             ->get();
@@ -256,7 +260,7 @@ class PresensiController extends Controller
             'tgl_izin' => $tgl_izin,
             'status' => $status,
             'keterangan' => $keterangan,
-            'status_approved' => '0' // Default status: Pending / Menunggu Persetujuan
+            'status_approved' => '0'
         ];
 
         $simpan = DB::table('pengajuan_izin')->insert($data);
@@ -267,8 +271,6 @@ class PresensiController extends Controller
             return redirect('/presensi/izin')->with(['error' => 'Data Gagal Disimpan']);
         }
     }
-
-    // --- MONITORING PRESENSI (ADMIN) ---
 
     public function monitoring()
     {
@@ -287,8 +289,6 @@ class PresensiController extends Controller
 
         return view('presensi.getpresensi', compact('presensi'));
     }
-
-    // --- APPROVAL IZIN & SAKIT (ADMIN) ---
 
     public function izinsakit(Request $request)
     {
@@ -347,8 +347,6 @@ class PresensiController extends Controller
         }
     }
 
-    // --- LAPORAN & REKAP PRESENSI (ADMIN) ---
-
     public function laporan()
     {
         $namabulan = ["", "Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
@@ -365,10 +363,11 @@ class PresensiController extends Controller
         $namabulan = ["", "Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
         $perangkat = DB::table('perangkat')->where('nik', $nik)->first();
 
+        // Diperbaiki menggunakan whereMonth & whereYear
         $presensi = DB::table('presensi')
             ->where('nik', $nik)
-            ->whereRaw('MONTH(tgl_presensi)="' . $bulan . '"')
-            ->whereRaw('YEAR(tgl_presensi)="' . $tahun . '"')
+            ->whereMonth('tgl_presensi', $bulan)
+            ->whereYear('tgl_presensi', $tahun)
             ->orderBy('tgl_presensi')
             ->get();
 
@@ -404,14 +403,12 @@ class PresensiController extends Controller
             ->orderBy('perangkat.nama_lengkap')
             ->get();
 
-        // --- TAMBAHAN: Ambil data pengajuan Izin/Sakit yang SUDAH DISETUJUI (status_approved = 1) ---
         $izinsakit = DB::table('pengajuan_izin')
             ->whereRaw('MONTH(tgl_izin) = ?', [$bulan])
             ->whereRaw('YEAR(tgl_izin) = ?', [$tahun])
             ->where('status_approved', '1')
             ->get();
 
-        // Sertakan 'izinsakit' ke dalam compact()
         return view('presensi.cetakrekap', compact('bulan', 'tahun', 'namabulan', 'rekap', 'izinsakit'));
     }
 }
